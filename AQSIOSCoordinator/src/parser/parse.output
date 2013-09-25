@@ -1,0 +1,1742 @@
+Terminals unused in grammar
+
+   NOTOKEN
+
+
+Grammar
+
+    0 $accept: start $end
+
+    1 start: command ';'
+
+    2 command: query
+    3        | registerstream
+    4        | registerrelation
+
+    5 registerstream: RW_REGISTER RW_STREAM T_STRING '(' non_mt_attrspec_list ')'
+
+    6 registerrelation: RW_REGISTER RW_RELATION T_STRING '(' non_mt_attrspec_list ')'
+
+    7 non_mt_attrspec_list: attrspec ',' non_mt_attrspec_list
+    8                     | attrspec
+
+    9 attrspec: T_STRING RW_INTEGER
+   10         | T_STRING RW_FLOAT
+   11         | T_STRING RW_BYTE
+   12         | T_STRING RW_CHAR '(' T_INT ')'
+
+   13 query: sfw_block
+   14      | xstream_clause '(' sfw_block ')'
+   15      | binary_op
+   16      | xstream_clause '(' binary_op ')'
+
+   17 xstream_clause: RW_ISTREAM
+   18               | RW_DSTREAM
+   19               | RW_RSTREAM
+
+   20 sfw_block: select_clause from_clause opt_where_clause opt_group_by_clause
+
+   21 select_clause: RW_SELECT RW_DISTINCT non_mt_projterm_list
+   22              | RW_SELECT non_mt_projterm_list
+   23              | RW_SELECT RW_DISTINCT '*'
+   24              | RW_SELECT '*'
+
+   25 from_clause: RW_FROM non_mt_relation_list
+
+   26 opt_where_clause: RW_WHERE non_mt_cond_list
+   27                 | nothing
+
+   28 opt_group_by_clause: RW_GROUP RW_BY non_mt_attr_list
+   29                    | nothing
+
+   30 non_mt_projterm_list: projterm ',' non_mt_projterm_list
+   31                     | projterm
+
+   32 projterm: arith_expr
+   33         | aggr_expr
+
+   34 aggr_expr: RW_COUNT '(' attr ')'
+   35          | RW_COUNT '(' '*' ')'
+   36          | RW_SUM '(' attr ')'
+   37          | RW_AVG '(' attr ')'
+   38          | RW_MAX '(' attr ')'
+   39          | RW_MIN '(' attr ')'
+
+   40 attr: T_STRING '.' T_STRING
+   41     | T_STRING
+
+   42 non_mt_attr_list: attr ',' non_mt_attr_list
+   43                 | attr
+
+   44 non_mt_relation_list: relation_variable ',' non_mt_relation_list
+   45                     | relation_variable
+
+   46 relation_variable: T_STRING '[' window_type ']'
+   47                  | T_STRING '[' window_type ']' RW_AS T_STRING
+   48                  | T_STRING
+   49                  | T_STRING RW_AS T_STRING
+
+   50 window_type: RW_RANGE time_spec
+   51            | RW_NOW
+   52            | RW_ROWS T_INT
+   53            | RW_RANGE RW_UNBOUNDED
+   54            | RW_PARTITION RW_BY non_mt_attr_list RW_ROWS T_INT
+
+   55 time_spec: T_INT
+   56          | T_INT RW_SECOND
+   57          | T_INT RW_MINUTE
+   58          | T_INT RW_HOUR
+   59          | T_INT RW_DAY
+
+   60 non_mt_cond_list: condition RW_AND non_mt_cond_list
+   61                 | condition
+
+   62 condition: arith_expr T_LT arith_expr
+   63          | arith_expr T_LE arith_expr
+   64          | arith_expr T_GT arith_expr
+   65          | arith_expr T_GE arith_expr
+   66          | arith_expr T_EQ arith_expr
+   67          | arith_expr T_NE arith_expr
+
+   68 arith_expr: attr
+   69           | const_value
+   70           | arith_expr '+' arith_expr
+   71           | arith_expr '-' arith_expr
+   72           | arith_expr '*' arith_expr
+   73           | arith_expr '/' arith_expr
+   74           | '(' arith_expr ')'
+
+   75 const_value: T_QSTRING
+   76            | T_INT
+   77            | T_REAL
+
+   78 binary_op: T_STRING RW_UNION T_STRING
+   79          | T_STRING RW_EXCEPT T_STRING
+
+   80 nothing: /* empty */
+
+
+Terminals, with rules where they appear
+
+$end (0) 0
+'(' (40) 5 6 12 14 16 34 35 36 37 38 39 74
+')' (41) 5 6 12 14 16 34 35 36 37 38 39 74
+'*' (42) 23 24 35 72
+'+' (43) 70
+',' (44) 7 30 42 44
+'-' (45) 71
+'.' (46) 40
+'/' (47) 73
+';' (59) 1
+'[' (91) 46 47
+']' (93) 46 47
+error (256)
+RW_REGISTER (258) 5 6
+RW_STREAM (259) 5
+RW_RELATION (260) 6
+RW_ISTREAM (261) 17
+RW_DSTREAM (262) 18
+RW_RSTREAM (263) 19
+RW_SELECT (264) 21 22 23 24
+RW_DISTINCT (265) 21 23
+RW_FROM (266) 25
+RW_WHERE (267) 26
+RW_GROUP (268) 28
+RW_BY (269) 28 54
+RW_AND (270) 60
+RW_AS (271) 47 49
+RW_UNION (272) 78
+RW_EXCEPT (273) 79
+RW_AVG (274) 37
+RW_MIN (275) 39
+RW_MAX (276) 38
+RW_COUNT (277) 34 35
+RW_SUM (278) 36
+RW_ROWS (279) 52 54
+RW_RANGE (280) 50 53
+RW_NOW (281) 51
+RW_PARTITION (282) 54
+RW_UNBOUNDED (283) 53
+RW_SECOND (284) 56
+RW_MINUTE (285) 57
+RW_HOUR (286) 58
+RW_DAY (287) 59
+T_EQ (288) 66
+T_LT (289) 62
+T_LE (290) 63
+T_GT (291) 64
+T_GE (292) 65
+T_NE (293) 67
+RW_INTEGER (294) 9
+RW_FLOAT (295) 10
+RW_CHAR (296) 12
+RW_BYTE (297) 11
+NOTOKEN (298)
+T_INT (299) 12 52 54 55 56 57 58 59 76
+T_REAL (300) 77
+T_STRING (301) 5 6 9 10 11 12 40 41 46 47 48 49 78 79
+T_QSTRING (302) 75
+
+
+Nonterminals, with rules where they appear
+
+$accept (59)
+    on left: 0
+start (60)
+    on left: 1, on right: 0
+command (61)
+    on left: 2 3 4, on right: 1
+registerstream (62)
+    on left: 5, on right: 3
+registerrelation (63)
+    on left: 6, on right: 4
+non_mt_attrspec_list (64)
+    on left: 7 8, on right: 5 6 7
+attrspec (65)
+    on left: 9 10 11 12, on right: 7 8
+query (66)
+    on left: 13 14 15 16, on right: 2
+xstream_clause (67)
+    on left: 17 18 19, on right: 14 16
+sfw_block (68)
+    on left: 20, on right: 13 14
+select_clause (69)
+    on left: 21 22 23 24, on right: 20
+from_clause (70)
+    on left: 25, on right: 20
+opt_where_clause (71)
+    on left: 26 27, on right: 20
+opt_group_by_clause (72)
+    on left: 28 29, on right: 20
+non_mt_projterm_list (73)
+    on left: 30 31, on right: 21 22 30
+projterm (74)
+    on left: 32 33, on right: 30 31
+aggr_expr (75)
+    on left: 34 35 36 37 38 39, on right: 33
+attr (76)
+    on left: 40 41, on right: 34 36 37 38 39 42 43 68
+non_mt_attr_list (77)
+    on left: 42 43, on right: 28 42 54
+non_mt_relation_list (78)
+    on left: 44 45, on right: 25 44
+relation_variable (79)
+    on left: 46 47 48 49, on right: 44 45
+window_type (80)
+    on left: 50 51 52 53 54, on right: 46 47
+time_spec (81)
+    on left: 55 56 57 58 59, on right: 50
+non_mt_cond_list (82)
+    on left: 60 61, on right: 26 60
+condition (83)
+    on left: 62 63 64 65 66 67, on right: 60 61
+arith_expr (84)
+    on left: 68 69 70 71 72 73 74, on right: 32 62 63 64 65 66 67 70
+    71 72 73 74
+const_value (85)
+    on left: 75 76 77, on right: 69
+binary_op (86)
+    on left: 78 79, on right: 15 16
+nothing (87)
+    on left: 80, on right: 27 29
+
+
+state 0
+
+    0 $accept: . start $end
+
+    RW_REGISTER  shift, and go to state 1
+    RW_ISTREAM   shift, and go to state 2
+    RW_DSTREAM   shift, and go to state 3
+    RW_RSTREAM   shift, and go to state 4
+    RW_SELECT    shift, and go to state 5
+    T_STRING     shift, and go to state 6
+
+    start             go to state 7
+    command           go to state 8
+    registerstream    go to state 9
+    registerrelation  go to state 10
+    query             go to state 11
+    xstream_clause    go to state 12
+    sfw_block         go to state 13
+    select_clause     go to state 14
+    binary_op         go to state 15
+
+
+state 1
+
+    5 registerstream: RW_REGISTER . RW_STREAM T_STRING '(' non_mt_attrspec_list ')'
+    6 registerrelation: RW_REGISTER . RW_RELATION T_STRING '(' non_mt_attrspec_list ')'
+
+    RW_STREAM    shift, and go to state 16
+    RW_RELATION  shift, and go to state 17
+
+
+state 2
+
+   17 xstream_clause: RW_ISTREAM .
+
+    $default  reduce using rule 17 (xstream_clause)
+
+
+state 3
+
+   18 xstream_clause: RW_DSTREAM .
+
+    $default  reduce using rule 18 (xstream_clause)
+
+
+state 4
+
+   19 xstream_clause: RW_RSTREAM .
+
+    $default  reduce using rule 19 (xstream_clause)
+
+
+state 5
+
+   21 select_clause: RW_SELECT . RW_DISTINCT non_mt_projterm_list
+   22              | RW_SELECT . non_mt_projterm_list
+   23              | RW_SELECT . RW_DISTINCT '*'
+   24              | RW_SELECT . '*'
+
+    RW_DISTINCT  shift, and go to state 18
+    RW_AVG       shift, and go to state 19
+    RW_MIN       shift, and go to state 20
+    RW_MAX       shift, and go to state 21
+    RW_COUNT     shift, and go to state 22
+    RW_SUM       shift, and go to state 23
+    T_INT        shift, and go to state 24
+    T_REAL       shift, and go to state 25
+    T_STRING     shift, and go to state 26
+    T_QSTRING    shift, and go to state 27
+    '*'          shift, and go to state 28
+    '('          shift, and go to state 29
+
+    non_mt_projterm_list  go to state 30
+    projterm              go to state 31
+    aggr_expr             go to state 32
+    attr                  go to state 33
+    arith_expr            go to state 34
+    const_value           go to state 35
+
+
+state 6
+
+   78 binary_op: T_STRING . RW_UNION T_STRING
+   79          | T_STRING . RW_EXCEPT T_STRING
+
+    RW_UNION   shift, and go to state 36
+    RW_EXCEPT  shift, and go to state 37
+
+
+state 7
+
+    0 $accept: start . $end
+
+    $end  shift, and go to state 38
+
+
+state 8
+
+    1 start: command . ';'
+
+    ';'  shift, and go to state 39
+
+
+state 9
+
+    3 command: registerstream .
+
+    $default  reduce using rule 3 (command)
+
+
+state 10
+
+    4 command: registerrelation .
+
+    $default  reduce using rule 4 (command)
+
+
+state 11
+
+    2 command: query .
+
+    $default  reduce using rule 2 (command)
+
+
+state 12
+
+   14 query: xstream_clause . '(' sfw_block ')'
+   16      | xstream_clause . '(' binary_op ')'
+
+    '('  shift, and go to state 40
+
+
+state 13
+
+   13 query: sfw_block .
+
+    $default  reduce using rule 13 (query)
+
+
+state 14
+
+   20 sfw_block: select_clause . from_clause opt_where_clause opt_group_by_clause
+
+    RW_FROM  shift, and go to state 41
+
+    from_clause  go to state 42
+
+
+state 15
+
+   15 query: binary_op .
+
+    $default  reduce using rule 15 (query)
+
+
+state 16
+
+    5 registerstream: RW_REGISTER RW_STREAM . T_STRING '(' non_mt_attrspec_list ')'
+
+    T_STRING  shift, and go to state 43
+
+
+state 17
+
+    6 registerrelation: RW_REGISTER RW_RELATION . T_STRING '(' non_mt_attrspec_list ')'
+
+    T_STRING  shift, and go to state 44
+
+
+state 18
+
+   21 select_clause: RW_SELECT RW_DISTINCT . non_mt_projterm_list
+   23              | RW_SELECT RW_DISTINCT . '*'
+
+    RW_AVG     shift, and go to state 19
+    RW_MIN     shift, and go to state 20
+    RW_MAX     shift, and go to state 21
+    RW_COUNT   shift, and go to state 22
+    RW_SUM     shift, and go to state 23
+    T_INT      shift, and go to state 24
+    T_REAL     shift, and go to state 25
+    T_STRING   shift, and go to state 26
+    T_QSTRING  shift, and go to state 27
+    '*'        shift, and go to state 45
+    '('        shift, and go to state 29
+
+    non_mt_projterm_list  go to state 46
+    projterm              go to state 31
+    aggr_expr             go to state 32
+    attr                  go to state 33
+    arith_expr            go to state 34
+    const_value           go to state 35
+
+
+state 19
+
+   37 aggr_expr: RW_AVG . '(' attr ')'
+
+    '('  shift, and go to state 47
+
+
+state 20
+
+   39 aggr_expr: RW_MIN . '(' attr ')'
+
+    '('  shift, and go to state 48
+
+
+state 21
+
+   38 aggr_expr: RW_MAX . '(' attr ')'
+
+    '('  shift, and go to state 49
+
+
+state 22
+
+   34 aggr_expr: RW_COUNT . '(' attr ')'
+   35          | RW_COUNT . '(' '*' ')'
+
+    '('  shift, and go to state 50
+
+
+state 23
+
+   36 aggr_expr: RW_SUM . '(' attr ')'
+
+    '('  shift, and go to state 51
+
+
+state 24
+
+   76 const_value: T_INT .
+
+    $default  reduce using rule 76 (const_value)
+
+
+state 25
+
+   77 const_value: T_REAL .
+
+    $default  reduce using rule 77 (const_value)
+
+
+state 26
+
+   40 attr: T_STRING . '.' T_STRING
+   41     | T_STRING .
+
+    '.'  shift, and go to state 52
+
+    $default  reduce using rule 41 (attr)
+
+
+state 27
+
+   75 const_value: T_QSTRING .
+
+    $default  reduce using rule 75 (const_value)
+
+
+state 28
+
+   24 select_clause: RW_SELECT '*' .
+
+    $default  reduce using rule 24 (select_clause)
+
+
+state 29
+
+   74 arith_expr: '(' . arith_expr ')'
+
+    T_INT      shift, and go to state 24
+    T_REAL     shift, and go to state 25
+    T_STRING   shift, and go to state 26
+    T_QSTRING  shift, and go to state 27
+    '('        shift, and go to state 29
+
+    attr         go to state 33
+    arith_expr   go to state 53
+    const_value  go to state 35
+
+
+state 30
+
+   22 select_clause: RW_SELECT non_mt_projterm_list .
+
+    $default  reduce using rule 22 (select_clause)
+
+
+state 31
+
+   30 non_mt_projterm_list: projterm . ',' non_mt_projterm_list
+   31                     | projterm .
+
+    ','  shift, and go to state 54
+
+    $default  reduce using rule 31 (non_mt_projterm_list)
+
+
+state 32
+
+   33 projterm: aggr_expr .
+
+    $default  reduce using rule 33 (projterm)
+
+
+state 33
+
+   68 arith_expr: attr .
+
+    $default  reduce using rule 68 (arith_expr)
+
+
+state 34
+
+   32 projterm: arith_expr .
+   70 arith_expr: arith_expr . '+' arith_expr
+   71           | arith_expr . '-' arith_expr
+   72           | arith_expr . '*' arith_expr
+   73           | arith_expr . '/' arith_expr
+
+    '+'  shift, and go to state 55
+    '-'  shift, and go to state 56
+    '*'  shift, and go to state 57
+    '/'  shift, and go to state 58
+
+    $default  reduce using rule 32 (projterm)
+
+
+state 35
+
+   69 arith_expr: const_value .
+
+    $default  reduce using rule 69 (arith_expr)
+
+
+state 36
+
+   78 binary_op: T_STRING RW_UNION . T_STRING
+
+    T_STRING  shift, and go to state 59
+
+
+state 37
+
+   79 binary_op: T_STRING RW_EXCEPT . T_STRING
+
+    T_STRING  shift, and go to state 60
+
+
+state 38
+
+    0 $accept: start $end .
+
+    $default  accept
+
+
+state 39
+
+    1 start: command ';' .
+
+    $default  reduce using rule 1 (start)
+
+
+state 40
+
+   14 query: xstream_clause '(' . sfw_block ')'
+   16      | xstream_clause '(' . binary_op ')'
+
+    RW_SELECT  shift, and go to state 5
+    T_STRING   shift, and go to state 6
+
+    sfw_block      go to state 61
+    select_clause  go to state 14
+    binary_op      go to state 62
+
+
+state 41
+
+   25 from_clause: RW_FROM . non_mt_relation_list
+
+    T_STRING  shift, and go to state 63
+
+    non_mt_relation_list  go to state 64
+    relation_variable     go to state 65
+
+
+state 42
+
+   20 sfw_block: select_clause from_clause . opt_where_clause opt_group_by_clause
+
+    RW_WHERE  shift, and go to state 66
+
+    $default  reduce using rule 80 (nothing)
+
+    opt_where_clause  go to state 67
+    nothing           go to state 68
+
+
+state 43
+
+    5 registerstream: RW_REGISTER RW_STREAM T_STRING . '(' non_mt_attrspec_list ')'
+
+    '('  shift, and go to state 69
+
+
+state 44
+
+    6 registerrelation: RW_REGISTER RW_RELATION T_STRING . '(' non_mt_attrspec_list ')'
+
+    '('  shift, and go to state 70
+
+
+state 45
+
+   23 select_clause: RW_SELECT RW_DISTINCT '*' .
+
+    $default  reduce using rule 23 (select_clause)
+
+
+state 46
+
+   21 select_clause: RW_SELECT RW_DISTINCT non_mt_projterm_list .
+
+    $default  reduce using rule 21 (select_clause)
+
+
+state 47
+
+   37 aggr_expr: RW_AVG '(' . attr ')'
+
+    T_STRING  shift, and go to state 26
+
+    attr  go to state 71
+
+
+state 48
+
+   39 aggr_expr: RW_MIN '(' . attr ')'
+
+    T_STRING  shift, and go to state 26
+
+    attr  go to state 72
+
+
+state 49
+
+   38 aggr_expr: RW_MAX '(' . attr ')'
+
+    T_STRING  shift, and go to state 26
+
+    attr  go to state 73
+
+
+state 50
+
+   34 aggr_expr: RW_COUNT '(' . attr ')'
+   35          | RW_COUNT '(' . '*' ')'
+
+    T_STRING  shift, and go to state 26
+    '*'       shift, and go to state 74
+
+    attr  go to state 75
+
+
+state 51
+
+   36 aggr_expr: RW_SUM '(' . attr ')'
+
+    T_STRING  shift, and go to state 26
+
+    attr  go to state 76
+
+
+state 52
+
+   40 attr: T_STRING '.' . T_STRING
+
+    T_STRING  shift, and go to state 77
+
+
+state 53
+
+   70 arith_expr: arith_expr . '+' arith_expr
+   71           | arith_expr . '-' arith_expr
+   72           | arith_expr . '*' arith_expr
+   73           | arith_expr . '/' arith_expr
+   74           | '(' arith_expr . ')'
+
+    '+'  shift, and go to state 55
+    '-'  shift, and go to state 56
+    '*'  shift, and go to state 57
+    '/'  shift, and go to state 58
+    ')'  shift, and go to state 78
+
+
+state 54
+
+   30 non_mt_projterm_list: projterm ',' . non_mt_projterm_list
+
+    RW_AVG     shift, and go to state 19
+    RW_MIN     shift, and go to state 20
+    RW_MAX     shift, and go to state 21
+    RW_COUNT   shift, and go to state 22
+    RW_SUM     shift, and go to state 23
+    T_INT      shift, and go to state 24
+    T_REAL     shift, and go to state 25
+    T_STRING   shift, and go to state 26
+    T_QSTRING  shift, and go to state 27
+    '('        shift, and go to state 29
+
+    non_mt_projterm_list  go to state 79
+    projterm              go to state 31
+    aggr_expr             go to state 32
+    attr                  go to state 33
+    arith_expr            go to state 34
+    const_value           go to state 35
+
+
+state 55
+
+   70 arith_expr: arith_expr '+' . arith_expr
+
+    T_INT      shift, and go to state 24
+    T_REAL     shift, and go to state 25
+    T_STRING   shift, and go to state 26
+    T_QSTRING  shift, and go to state 27
+    '('        shift, and go to state 29
+
+    attr         go to state 33
+    arith_expr   go to state 80
+    const_value  go to state 35
+
+
+state 56
+
+   71 arith_expr: arith_expr '-' . arith_expr
+
+    T_INT      shift, and go to state 24
+    T_REAL     shift, and go to state 25
+    T_STRING   shift, and go to state 26
+    T_QSTRING  shift, and go to state 27
+    '('        shift, and go to state 29
+
+    attr         go to state 33
+    arith_expr   go to state 81
+    const_value  go to state 35
+
+
+state 57
+
+   72 arith_expr: arith_expr '*' . arith_expr
+
+    T_INT      shift, and go to state 24
+    T_REAL     shift, and go to state 25
+    T_STRING   shift, and go to state 26
+    T_QSTRING  shift, and go to state 27
+    '('        shift, and go to state 29
+
+    attr         go to state 33
+    arith_expr   go to state 82
+    const_value  go to state 35
+
+
+state 58
+
+   73 arith_expr: arith_expr '/' . arith_expr
+
+    T_INT      shift, and go to state 24
+    T_REAL     shift, and go to state 25
+    T_STRING   shift, and go to state 26
+    T_QSTRING  shift, and go to state 27
+    '('        shift, and go to state 29
+
+    attr         go to state 33
+    arith_expr   go to state 83
+    const_value  go to state 35
+
+
+state 59
+
+   78 binary_op: T_STRING RW_UNION T_STRING .
+
+    $default  reduce using rule 78 (binary_op)
+
+
+state 60
+
+   79 binary_op: T_STRING RW_EXCEPT T_STRING .
+
+    $default  reduce using rule 79 (binary_op)
+
+
+state 61
+
+   14 query: xstream_clause '(' sfw_block . ')'
+
+    ')'  shift, and go to state 84
+
+
+state 62
+
+   16 query: xstream_clause '(' binary_op . ')'
+
+    ')'  shift, and go to state 85
+
+
+state 63
+
+   46 relation_variable: T_STRING . '[' window_type ']'
+   47                  | T_STRING . '[' window_type ']' RW_AS T_STRING
+   48                  | T_STRING .
+   49                  | T_STRING . RW_AS T_STRING
+
+    RW_AS  shift, and go to state 86
+    '['    shift, and go to state 87
+
+    $default  reduce using rule 48 (relation_variable)
+
+
+state 64
+
+   25 from_clause: RW_FROM non_mt_relation_list .
+
+    $default  reduce using rule 25 (from_clause)
+
+
+state 65
+
+   44 non_mt_relation_list: relation_variable . ',' non_mt_relation_list
+   45                     | relation_variable .
+
+    ','  shift, and go to state 88
+
+    $default  reduce using rule 45 (non_mt_relation_list)
+
+
+state 66
+
+   26 opt_where_clause: RW_WHERE . non_mt_cond_list
+
+    T_INT      shift, and go to state 24
+    T_REAL     shift, and go to state 25
+    T_STRING   shift, and go to state 26
+    T_QSTRING  shift, and go to state 27
+    '('        shift, and go to state 29
+
+    attr              go to state 33
+    non_mt_cond_list  go to state 89
+    condition         go to state 90
+    arith_expr        go to state 91
+    const_value       go to state 35
+
+
+state 67
+
+   20 sfw_block: select_clause from_clause opt_where_clause . opt_group_by_clause
+
+    RW_GROUP  shift, and go to state 92
+
+    $default  reduce using rule 80 (nothing)
+
+    opt_group_by_clause  go to state 93
+    nothing              go to state 94
+
+
+state 68
+
+   27 opt_where_clause: nothing .
+
+    $default  reduce using rule 27 (opt_where_clause)
+
+
+state 69
+
+    5 registerstream: RW_REGISTER RW_STREAM T_STRING '(' . non_mt_attrspec_list ')'
+
+    T_STRING  shift, and go to state 95
+
+    non_mt_attrspec_list  go to state 96
+    attrspec              go to state 97
+
+
+state 70
+
+    6 registerrelation: RW_REGISTER RW_RELATION T_STRING '(' . non_mt_attrspec_list ')'
+
+    T_STRING  shift, and go to state 95
+
+    non_mt_attrspec_list  go to state 98
+    attrspec              go to state 97
+
+
+state 71
+
+   37 aggr_expr: RW_AVG '(' attr . ')'
+
+    ')'  shift, and go to state 99
+
+
+state 72
+
+   39 aggr_expr: RW_MIN '(' attr . ')'
+
+    ')'  shift, and go to state 100
+
+
+state 73
+
+   38 aggr_expr: RW_MAX '(' attr . ')'
+
+    ')'  shift, and go to state 101
+
+
+state 74
+
+   35 aggr_expr: RW_COUNT '(' '*' . ')'
+
+    ')'  shift, and go to state 102
+
+
+state 75
+
+   34 aggr_expr: RW_COUNT '(' attr . ')'
+
+    ')'  shift, and go to state 103
+
+
+state 76
+
+   36 aggr_expr: RW_SUM '(' attr . ')'
+
+    ')'  shift, and go to state 104
+
+
+state 77
+
+   40 attr: T_STRING '.' T_STRING .
+
+    $default  reduce using rule 40 (attr)
+
+
+state 78
+
+   74 arith_expr: '(' arith_expr ')' .
+
+    $default  reduce using rule 74 (arith_expr)
+
+
+state 79
+
+   30 non_mt_projterm_list: projterm ',' non_mt_projterm_list .
+
+    $default  reduce using rule 30 (non_mt_projterm_list)
+
+
+state 80
+
+   70 arith_expr: arith_expr . '+' arith_expr
+   70           | arith_expr '+' arith_expr .
+   71           | arith_expr . '-' arith_expr
+   72           | arith_expr . '*' arith_expr
+   73           | arith_expr . '/' arith_expr
+
+    '*'  shift, and go to state 57
+    '/'  shift, and go to state 58
+
+    $default  reduce using rule 70 (arith_expr)
+
+
+state 81
+
+   70 arith_expr: arith_expr . '+' arith_expr
+   71           | arith_expr . '-' arith_expr
+   71           | arith_expr '-' arith_expr .
+   72           | arith_expr . '*' arith_expr
+   73           | arith_expr . '/' arith_expr
+
+    '*'  shift, and go to state 57
+    '/'  shift, and go to state 58
+
+    $default  reduce using rule 71 (arith_expr)
+
+
+state 82
+
+   70 arith_expr: arith_expr . '+' arith_expr
+   71           | arith_expr . '-' arith_expr
+   72           | arith_expr . '*' arith_expr
+   72           | arith_expr '*' arith_expr .
+   73           | arith_expr . '/' arith_expr
+
+    $default  reduce using rule 72 (arith_expr)
+
+
+state 83
+
+   70 arith_expr: arith_expr . '+' arith_expr
+   71           | arith_expr . '-' arith_expr
+   72           | arith_expr . '*' arith_expr
+   73           | arith_expr . '/' arith_expr
+   73           | arith_expr '/' arith_expr .
+
+    $default  reduce using rule 73 (arith_expr)
+
+
+state 84
+
+   14 query: xstream_clause '(' sfw_block ')' .
+
+    $default  reduce using rule 14 (query)
+
+
+state 85
+
+   16 query: xstream_clause '(' binary_op ')' .
+
+    $default  reduce using rule 16 (query)
+
+
+state 86
+
+   49 relation_variable: T_STRING RW_AS . T_STRING
+
+    T_STRING  shift, and go to state 105
+
+
+state 87
+
+   46 relation_variable: T_STRING '[' . window_type ']'
+   47                  | T_STRING '[' . window_type ']' RW_AS T_STRING
+
+    RW_ROWS       shift, and go to state 106
+    RW_RANGE      shift, and go to state 107
+    RW_NOW        shift, and go to state 108
+    RW_PARTITION  shift, and go to state 109
+
+    window_type  go to state 110
+
+
+state 88
+
+   44 non_mt_relation_list: relation_variable ',' . non_mt_relation_list
+
+    T_STRING  shift, and go to state 63
+
+    non_mt_relation_list  go to state 111
+    relation_variable     go to state 65
+
+
+state 89
+
+   26 opt_where_clause: RW_WHERE non_mt_cond_list .
+
+    $default  reduce using rule 26 (opt_where_clause)
+
+
+state 90
+
+   60 non_mt_cond_list: condition . RW_AND non_mt_cond_list
+   61                 | condition .
+
+    RW_AND  shift, and go to state 112
+
+    $default  reduce using rule 61 (non_mt_cond_list)
+
+
+state 91
+
+   62 condition: arith_expr . T_LT arith_expr
+   63          | arith_expr . T_LE arith_expr
+   64          | arith_expr . T_GT arith_expr
+   65          | arith_expr . T_GE arith_expr
+   66          | arith_expr . T_EQ arith_expr
+   67          | arith_expr . T_NE arith_expr
+   70 arith_expr: arith_expr . '+' arith_expr
+   71           | arith_expr . '-' arith_expr
+   72           | arith_expr . '*' arith_expr
+   73           | arith_expr . '/' arith_expr
+
+    T_EQ  shift, and go to state 113
+    T_LT  shift, and go to state 114
+    T_LE  shift, and go to state 115
+    T_GT  shift, and go to state 116
+    T_GE  shift, and go to state 117
+    T_NE  shift, and go to state 118
+    '+'   shift, and go to state 55
+    '-'   shift, and go to state 56
+    '*'   shift, and go to state 57
+    '/'   shift, and go to state 58
+
+
+state 92
+
+   28 opt_group_by_clause: RW_GROUP . RW_BY non_mt_attr_list
+
+    RW_BY  shift, and go to state 119
+
+
+state 93
+
+   20 sfw_block: select_clause from_clause opt_where_clause opt_group_by_clause .
+
+    $default  reduce using rule 20 (sfw_block)
+
+
+state 94
+
+   29 opt_group_by_clause: nothing .
+
+    $default  reduce using rule 29 (opt_group_by_clause)
+
+
+state 95
+
+    9 attrspec: T_STRING . RW_INTEGER
+   10         | T_STRING . RW_FLOAT
+   11         | T_STRING . RW_BYTE
+   12         | T_STRING . RW_CHAR '(' T_INT ')'
+
+    RW_INTEGER  shift, and go to state 120
+    RW_FLOAT    shift, and go to state 121
+    RW_CHAR     shift, and go to state 122
+    RW_BYTE     shift, and go to state 123
+
+
+state 96
+
+    5 registerstream: RW_REGISTER RW_STREAM T_STRING '(' non_mt_attrspec_list . ')'
+
+    ')'  shift, and go to state 124
+
+
+state 97
+
+    7 non_mt_attrspec_list: attrspec . ',' non_mt_attrspec_list
+    8                     | attrspec .
+
+    ','  shift, and go to state 125
+
+    $default  reduce using rule 8 (non_mt_attrspec_list)
+
+
+state 98
+
+    6 registerrelation: RW_REGISTER RW_RELATION T_STRING '(' non_mt_attrspec_list . ')'
+
+    ')'  shift, and go to state 126
+
+
+state 99
+
+   37 aggr_expr: RW_AVG '(' attr ')' .
+
+    $default  reduce using rule 37 (aggr_expr)
+
+
+state 100
+
+   39 aggr_expr: RW_MIN '(' attr ')' .
+
+    $default  reduce using rule 39 (aggr_expr)
+
+
+state 101
+
+   38 aggr_expr: RW_MAX '(' attr ')' .
+
+    $default  reduce using rule 38 (aggr_expr)
+
+
+state 102
+
+   35 aggr_expr: RW_COUNT '(' '*' ')' .
+
+    $default  reduce using rule 35 (aggr_expr)
+
+
+state 103
+
+   34 aggr_expr: RW_COUNT '(' attr ')' .
+
+    $default  reduce using rule 34 (aggr_expr)
+
+
+state 104
+
+   36 aggr_expr: RW_SUM '(' attr ')' .
+
+    $default  reduce using rule 36 (aggr_expr)
+
+
+state 105
+
+   49 relation_variable: T_STRING RW_AS T_STRING .
+
+    $default  reduce using rule 49 (relation_variable)
+
+
+state 106
+
+   52 window_type: RW_ROWS . T_INT
+
+    T_INT  shift, and go to state 127
+
+
+state 107
+
+   50 window_type: RW_RANGE . time_spec
+   53            | RW_RANGE . RW_UNBOUNDED
+
+    RW_UNBOUNDED  shift, and go to state 128
+    T_INT         shift, and go to state 129
+
+    time_spec  go to state 130
+
+
+state 108
+
+   51 window_type: RW_NOW .
+
+    $default  reduce using rule 51 (window_type)
+
+
+state 109
+
+   54 window_type: RW_PARTITION . RW_BY non_mt_attr_list RW_ROWS T_INT
+
+    RW_BY  shift, and go to state 131
+
+
+state 110
+
+   46 relation_variable: T_STRING '[' window_type . ']'
+   47                  | T_STRING '[' window_type . ']' RW_AS T_STRING
+
+    ']'  shift, and go to state 132
+
+
+state 111
+
+   44 non_mt_relation_list: relation_variable ',' non_mt_relation_list .
+
+    $default  reduce using rule 44 (non_mt_relation_list)
+
+
+state 112
+
+   60 non_mt_cond_list: condition RW_AND . non_mt_cond_list
+
+    T_INT      shift, and go to state 24
+    T_REAL     shift, and go to state 25
+    T_STRING   shift, and go to state 26
+    T_QSTRING  shift, and go to state 27
+    '('        shift, and go to state 29
+
+    attr              go to state 33
+    non_mt_cond_list  go to state 133
+    condition         go to state 90
+    arith_expr        go to state 91
+    const_value       go to state 35
+
+
+state 113
+
+   66 condition: arith_expr T_EQ . arith_expr
+
+    T_INT      shift, and go to state 24
+    T_REAL     shift, and go to state 25
+    T_STRING   shift, and go to state 26
+    T_QSTRING  shift, and go to state 27
+    '('        shift, and go to state 29
+
+    attr         go to state 33
+    arith_expr   go to state 134
+    const_value  go to state 35
+
+
+state 114
+
+   62 condition: arith_expr T_LT . arith_expr
+
+    T_INT      shift, and go to state 24
+    T_REAL     shift, and go to state 25
+    T_STRING   shift, and go to state 26
+    T_QSTRING  shift, and go to state 27
+    '('        shift, and go to state 29
+
+    attr         go to state 33
+    arith_expr   go to state 135
+    const_value  go to state 35
+
+
+state 115
+
+   63 condition: arith_expr T_LE . arith_expr
+
+    T_INT      shift, and go to state 24
+    T_REAL     shift, and go to state 25
+    T_STRING   shift, and go to state 26
+    T_QSTRING  shift, and go to state 27
+    '('        shift, and go to state 29
+
+    attr         go to state 33
+    arith_expr   go to state 136
+    const_value  go to state 35
+
+
+state 116
+
+   64 condition: arith_expr T_GT . arith_expr
+
+    T_INT      shift, and go to state 24
+    T_REAL     shift, and go to state 25
+    T_STRING   shift, and go to state 26
+    T_QSTRING  shift, and go to state 27
+    '('        shift, and go to state 29
+
+    attr         go to state 33
+    arith_expr   go to state 137
+    const_value  go to state 35
+
+
+state 117
+
+   65 condition: arith_expr T_GE . arith_expr
+
+    T_INT      shift, and go to state 24
+    T_REAL     shift, and go to state 25
+    T_STRING   shift, and go to state 26
+    T_QSTRING  shift, and go to state 27
+    '('        shift, and go to state 29
+
+    attr         go to state 33
+    arith_expr   go to state 138
+    const_value  go to state 35
+
+
+state 118
+
+   67 condition: arith_expr T_NE . arith_expr
+
+    T_INT      shift, and go to state 24
+    T_REAL     shift, and go to state 25
+    T_STRING   shift, and go to state 26
+    T_QSTRING  shift, and go to state 27
+    '('        shift, and go to state 29
+
+    attr         go to state 33
+    arith_expr   go to state 139
+    const_value  go to state 35
+
+
+state 119
+
+   28 opt_group_by_clause: RW_GROUP RW_BY . non_mt_attr_list
+
+    T_STRING  shift, and go to state 26
+
+    attr              go to state 140
+    non_mt_attr_list  go to state 141
+
+
+state 120
+
+    9 attrspec: T_STRING RW_INTEGER .
+
+    $default  reduce using rule 9 (attrspec)
+
+
+state 121
+
+   10 attrspec: T_STRING RW_FLOAT .
+
+    $default  reduce using rule 10 (attrspec)
+
+
+state 122
+
+   12 attrspec: T_STRING RW_CHAR . '(' T_INT ')'
+
+    '('  shift, and go to state 142
+
+
+state 123
+
+   11 attrspec: T_STRING RW_BYTE .
+
+    $default  reduce using rule 11 (attrspec)
+
+
+state 124
+
+    5 registerstream: RW_REGISTER RW_STREAM T_STRING '(' non_mt_attrspec_list ')' .
+
+    $default  reduce using rule 5 (registerstream)
+
+
+state 125
+
+    7 non_mt_attrspec_list: attrspec ',' . non_mt_attrspec_list
+
+    T_STRING  shift, and go to state 95
+
+    non_mt_attrspec_list  go to state 143
+    attrspec              go to state 97
+
+
+state 126
+
+    6 registerrelation: RW_REGISTER RW_RELATION T_STRING '(' non_mt_attrspec_list ')' .
+
+    $default  reduce using rule 6 (registerrelation)
+
+
+state 127
+
+   52 window_type: RW_ROWS T_INT .
+
+    $default  reduce using rule 52 (window_type)
+
+
+state 128
+
+   53 window_type: RW_RANGE RW_UNBOUNDED .
+
+    $default  reduce using rule 53 (window_type)
+
+
+state 129
+
+   55 time_spec: T_INT .
+   56          | T_INT . RW_SECOND
+   57          | T_INT . RW_MINUTE
+   58          | T_INT . RW_HOUR
+   59          | T_INT . RW_DAY
+
+    RW_SECOND  shift, and go to state 144
+    RW_MINUTE  shift, and go to state 145
+    RW_HOUR    shift, and go to state 146
+    RW_DAY     shift, and go to state 147
+
+    $default  reduce using rule 55 (time_spec)
+
+
+state 130
+
+   50 window_type: RW_RANGE time_spec .
+
+    $default  reduce using rule 50 (window_type)
+
+
+state 131
+
+   54 window_type: RW_PARTITION RW_BY . non_mt_attr_list RW_ROWS T_INT
+
+    T_STRING  shift, and go to state 26
+
+    attr              go to state 140
+    non_mt_attr_list  go to state 148
+
+
+state 132
+
+   46 relation_variable: T_STRING '[' window_type ']' .
+   47                  | T_STRING '[' window_type ']' . RW_AS T_STRING
+
+    RW_AS  shift, and go to state 149
+
+    $default  reduce using rule 46 (relation_variable)
+
+
+state 133
+
+   60 non_mt_cond_list: condition RW_AND non_mt_cond_list .
+
+    $default  reduce using rule 60 (non_mt_cond_list)
+
+
+state 134
+
+   66 condition: arith_expr T_EQ arith_expr .
+   70 arith_expr: arith_expr . '+' arith_expr
+   71           | arith_expr . '-' arith_expr
+   72           | arith_expr . '*' arith_expr
+   73           | arith_expr . '/' arith_expr
+
+    '+'  shift, and go to state 55
+    '-'  shift, and go to state 56
+    '*'  shift, and go to state 57
+    '/'  shift, and go to state 58
+
+    $default  reduce using rule 66 (condition)
+
+
+state 135
+
+   62 condition: arith_expr T_LT arith_expr .
+   70 arith_expr: arith_expr . '+' arith_expr
+   71           | arith_expr . '-' arith_expr
+   72           | arith_expr . '*' arith_expr
+   73           | arith_expr . '/' arith_expr
+
+    '+'  shift, and go to state 55
+    '-'  shift, and go to state 56
+    '*'  shift, and go to state 57
+    '/'  shift, and go to state 58
+
+    $default  reduce using rule 62 (condition)
+
+
+state 136
+
+   63 condition: arith_expr T_LE arith_expr .
+   70 arith_expr: arith_expr . '+' arith_expr
+   71           | arith_expr . '-' arith_expr
+   72           | arith_expr . '*' arith_expr
+   73           | arith_expr . '/' arith_expr
+
+    '+'  shift, and go to state 55
+    '-'  shift, and go to state 56
+    '*'  shift, and go to state 57
+    '/'  shift, and go to state 58
+
+    $default  reduce using rule 63 (condition)
+
+
+state 137
+
+   64 condition: arith_expr T_GT arith_expr .
+   70 arith_expr: arith_expr . '+' arith_expr
+   71           | arith_expr . '-' arith_expr
+   72           | arith_expr . '*' arith_expr
+   73           | arith_expr . '/' arith_expr
+
+    '+'  shift, and go to state 55
+    '-'  shift, and go to state 56
+    '*'  shift, and go to state 57
+    '/'  shift, and go to state 58
+
+    $default  reduce using rule 64 (condition)
+
+
+state 138
+
+   65 condition: arith_expr T_GE arith_expr .
+   70 arith_expr: arith_expr . '+' arith_expr
+   71           | arith_expr . '-' arith_expr
+   72           | arith_expr . '*' arith_expr
+   73           | arith_expr . '/' arith_expr
+
+    '+'  shift, and go to state 55
+    '-'  shift, and go to state 56
+    '*'  shift, and go to state 57
+    '/'  shift, and go to state 58
+
+    $default  reduce using rule 65 (condition)
+
+
+state 139
+
+   67 condition: arith_expr T_NE arith_expr .
+   70 arith_expr: arith_expr . '+' arith_expr
+   71           | arith_expr . '-' arith_expr
+   72           | arith_expr . '*' arith_expr
+   73           | arith_expr . '/' arith_expr
+
+    '+'  shift, and go to state 55
+    '-'  shift, and go to state 56
+    '*'  shift, and go to state 57
+    '/'  shift, and go to state 58
+
+    $default  reduce using rule 67 (condition)
+
+
+state 140
+
+   42 non_mt_attr_list: attr . ',' non_mt_attr_list
+   43                 | attr .
+
+    ','  shift, and go to state 150
+
+    $default  reduce using rule 43 (non_mt_attr_list)
+
+
+state 141
+
+   28 opt_group_by_clause: RW_GROUP RW_BY non_mt_attr_list .
+
+    $default  reduce using rule 28 (opt_group_by_clause)
+
+
+state 142
+
+   12 attrspec: T_STRING RW_CHAR '(' . T_INT ')'
+
+    T_INT  shift, and go to state 151
+
+
+state 143
+
+    7 non_mt_attrspec_list: attrspec ',' non_mt_attrspec_list .
+
+    $default  reduce using rule 7 (non_mt_attrspec_list)
+
+
+state 144
+
+   56 time_spec: T_INT RW_SECOND .
+
+    $default  reduce using rule 56 (time_spec)
+
+
+state 145
+
+   57 time_spec: T_INT RW_MINUTE .
+
+    $default  reduce using rule 57 (time_spec)
+
+
+state 146
+
+   58 time_spec: T_INT RW_HOUR .
+
+    $default  reduce using rule 58 (time_spec)
+
+
+state 147
+
+   59 time_spec: T_INT RW_DAY .
+
+    $default  reduce using rule 59 (time_spec)
+
+
+state 148
+
+   54 window_type: RW_PARTITION RW_BY non_mt_attr_list . RW_ROWS T_INT
+
+    RW_ROWS  shift, and go to state 152
+
+
+state 149
+
+   47 relation_variable: T_STRING '[' window_type ']' RW_AS . T_STRING
+
+    T_STRING  shift, and go to state 153
+
+
+state 150
+
+   42 non_mt_attr_list: attr ',' . non_mt_attr_list
+
+    T_STRING  shift, and go to state 26
+
+    attr              go to state 140
+    non_mt_attr_list  go to state 154
+
+
+state 151
+
+   12 attrspec: T_STRING RW_CHAR '(' T_INT . ')'
+
+    ')'  shift, and go to state 155
+
+
+state 152
+
+   54 window_type: RW_PARTITION RW_BY non_mt_attr_list RW_ROWS . T_INT
+
+    T_INT  shift, and go to state 156
+
+
+state 153
+
+   47 relation_variable: T_STRING '[' window_type ']' RW_AS T_STRING .
+
+    $default  reduce using rule 47 (relation_variable)
+
+
+state 154
+
+   42 non_mt_attr_list: attr ',' non_mt_attr_list .
+
+    $default  reduce using rule 42 (non_mt_attr_list)
+
+
+state 155
+
+   12 attrspec: T_STRING RW_CHAR '(' T_INT ')' .
+
+    $default  reduce using rule 12 (attrspec)
+
+
+state 156
+
+   54 window_type: RW_PARTITION RW_BY non_mt_attr_list RW_ROWS T_INT .
+
+    $default  reduce using rule 54 (window_type)
