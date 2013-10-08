@@ -17,6 +17,7 @@
 #include <thread_db.h>
 #include <errno.h>
 #include <iostream>
+#include <arpa/inet.h>
 
 #ifndef _SCRIPT_FILE_READER_
 #include "script_file_reader.h"
@@ -397,8 +398,6 @@ int acceptingConn(){
 		//add to the set of client socket, mutex needed here to avoid conflict with the other two threads
 		//which selects from this set
 		pthread_mutex_lock(&mutex_fdset);
-
-		//FD_SET(newsockfd, &clientsocks);
 		for(int i=0;i<MAX_NUM_CLIENTS;i++){
 			if(sock_array[i]==0){
 				sock_array[i]=newsockfd;
@@ -411,8 +410,16 @@ int acceptingConn(){
 		//add the info to the load manager object to manage, mutex used inside the call
 		load_mgr->addNode(newsockfd);
 
-		printf("accepted a new connection \n");
+		//testing only: printing the IP address of the connected client
+		/*sockaddr_in peeraddr;
+		socklen_t peerlen = sizeof(peeraddr);
+		getpeername(newsockfd,(sockaddr*) &peeraddr, &peerlen);
+		char str[INET_ADDRSTRLEN];
+		inet_ntop( AF_INET, &peeraddr.sin_addr.s_addr, str, INET_ADDRSTRLEN );
+		printf("accepted a new connection: %s: %d \n", str, peeraddr.sin_port);
+		*/
 	}
+	return 0;
 }
 int receivingClientReport(){
 
@@ -423,16 +430,19 @@ int receivingClientReport(){
 		fd_set readfds;
 		FD_ZERO(&readfds);
 		int temp_sock_array[MAX_NUM_CLIENTS];
-		//copy the currently opened socket to the re
+		int max_fd =0;
+		//copy the currently opened socket to the readable fd set
 		pthread_mutex_lock(&mutex_fdset);
 		for(int i=0;i<MAX_NUM_CLIENTS;i++){
 			temp_sock_array[i] = sock_array[i]; // we copy it to a temp array, so that we can release the sock_array for other threads
-			if(sock_array[i]>0)
+			if(sock_array[i]>0){
 				FD_SET(sock_array[i],&readfds);
+				if(sock_array[i]>max_fd) max_fd = sock_array[i];
+			}
 		}
 		pthread_mutex_unlock(&mutex_fdset);
 
-		int activity = select(MAX_NUM_CLIENTS+3,&readfds, NULL, NULL, NULL); //timeout is null: wait indefinitely
+		int activity = select(max_fd+1,&readfds, NULL, NULL, NULL); //timeout is null: wait indefinitely
 
 		if(activity<0 && errno!=EINTR){
 			printf("select error");
@@ -467,15 +477,12 @@ int receivingClientReport(){
 
 }
 int handleClientReport(int clientfd){
-	char msg[256];
-	int result = read(clientfd,msg,256);
+	char msg[512];
+	int result = read(clientfd,msg,512);
 	if(result ==0)//the socket is closed from client side{
 		return -1;
-	else{
-		//check the header of the message
-		if(strncmp(msg,"NI",2)==0)//node info
+	else
 			load_mgr->updateNodeInfo(clientfd,msg);
-	}
 	return 0;
 
 }
