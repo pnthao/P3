@@ -47,16 +47,18 @@
 #include "phy_op.h"
 #endif
 
-//extern fd_set clientsocks; //this actually also contains serverfd
-//extern pthread_t recv_threadID;
- pthread_t send_threadID;
- int serverfd, portno; //listening socket and port number of server
- pthread_mutex_t mutex_fdset;
- int bStop;
- int sock_array[MAX_NUM_CLIENTS];
- LoadManager *load_mgr;
+pthread_t threadID_loadMigration;
+int isUpdateReady;
+pthread_mutex_t mutexUpdateReady;
+pthread_cond_t condUpdateReady;
+
+int serverfd, portno; //listening socket and port number of server
+pthread_mutex_t mutex_fdset;
+int bStop;
+int sockfds[MAX_NUM_CLIENTS];
+LoadManager *load_mgr;
 //the global query network, which is a linked list of registered operators
- Physical::Operator* regOps =0;
+Physical::Operator* regOps =0;
 
 //this is for script file loadder
 static const unsigned int MAX_TABLE_SPEC = 1024;//256;
@@ -95,13 +97,19 @@ int main(int argc, char *argv[]) {
 	//load the global query network
 	loadQueryNetwork(script_file,regOps);
 
-	//init the mutex protecting the set of socket fds;
+	//initializing
+
+	//init the mutexes and conditional variable
 
 	pthread_mutex_init(&mutex_fdset, NULL);
+	pthread_mutex_init(&mutexUpdateReady, NULL);
+	pthread_cond_init(&condUpdateReady, NULL);
+
+	isUpdateReady = 0;
 
 	//initialize the socket fd array
 	for (int i=0; i<MAX_NUM_CLIENTS;i++){
-		sock_array[i]=0;
+		sockfds[i]=0;
 	}
 
 	//create the global load manager object
@@ -112,14 +120,24 @@ int main(int argc, char *argv[]) {
 
 	//add the server listening socket
 	for(int i=0;i<MAX_NUM_CLIENTS;i++){
-		if(sock_array[i]==0){
-			sock_array[i]=serverfd;
+		if(sockfds[i]==0){
+			sockfds[i]=serverfd;
 			break;
 		}
 	}
 
 	//handle contrl-C from user input
 	signal(SIGINT, sigproc);
+
+
+	//create another thread to monitor client's load status and calculate migration decision
+	pthread_attr_t migration_thread_attr;
+	pthread_attr_init(&migration_thread_attr);
+	pthread_attr_setdetachstate(&migration_thread_attr,PTHREAD_CREATE_JOINABLE);
+
+	printf("creating load migration management thread \n");
+
+	pthread_create(&threadID_loadMigration, &migration_thread_attr, manageMigration, NULL);
 
 	//wait for and process connection request/msg from clients;
 	receivingClientReport();
@@ -168,7 +186,7 @@ int loadQueryNetwork(char *applnScriptFile, Physical::Operator* &plan){
 }
 
 int register_appln (Server       *server,
-						   const char   *applnScriptFile, Physical::Operator* &plan)
+		const char   *applnScriptFile, Physical::Operator* &plan)
 {
 	int rc;
 
@@ -232,8 +250,8 @@ int register_appln (Server       *server,
 
 			// register the table
 			if((rc = server -> registerBaseTable(tableSpecBuf,
-												 tableSpecLen,
-												 source)) != 0) {
+					tableSpecLen,
+					source)) != 0) {
 				cout << "Error registering base table" << endl;
 				return rc;
 			}
@@ -265,14 +283,14 @@ int register_appln (Server       *server,
 
 			// Create a generic query output
 			output = outputs[numOutput] =
-				new GenOutput (queryOutput[numOutput]);
+					new GenOutput (queryOutput[numOutput]);
 			numOutput++;
 
 			// Register the query
 			if((rc = server -> registerQuery(query,
-											 queryLen,
-											 output,
-											 queryId)) != 0){
+					queryLen,
+					output,
+					queryId)) != 0){
 				cout << "Error registering query" << endl;
 				cout << "Query: " << command.desc << endl;
 				return rc;
@@ -282,22 +300,22 @@ int register_appln (Server       *server,
 
 			break;
 
-       		//Query Class Scheduling by Lory Al Moakar
-		// recognize the query class command and pass to the server
+			//Query Class Scheduling by Lory Al Moakar
+			// recognize the query class command and pass to the server
 		case ScriptFileReader:: QCLASS:
-		  server -> current_query_class =  atoi(command.desc);
-		  cout<< "Current class " << server -> current_query_class<<endl;
-		  break;
-       		//end of Query Class Scheduling by LAM
+			server -> current_query_class =  atoi(command.desc);
+			cout<< "Current class " << server -> current_query_class<<endl;
+			break;
+			//end of Query Class Scheduling by LAM
 
 
 		case ScriptFileReader::VQUERY:
 
 			// Register query
 			if ((rc = server -> registerQuery (command.desc,
-											   command.len,
-											   0,
-											   queryId)) != 0) {
+					command.len,
+					0,
+					queryId)) != 0) {
 				cout << "Error registering query" << endl;
 				cout << "Query: " << command.desc << endl;
 				return rc;
@@ -313,8 +331,8 @@ int register_appln (Server       *server,
 				return -1;
 
 			if ((rc = server -> registerView (queryId,
-											  command.desc,
-											  command.len)) != 0) {
+					command.desc,
+					command.len)) != 0) {
 				cout << "Error registering view" << endl;
 				cout << "View: " << command.desc << endl;
 				return rc;
@@ -373,9 +391,15 @@ int startServerListensing(){
 }
 int stopServer(){
 
+	pthread_mutex_lock(&mutexUpdateReady);
 	bStop =1;
-	pthread_join(send_threadID, NULL);
+	pthread_cond_signal(&condUpdateReady);
+	pthread_mutex_unlock(&mutexUpdateReady);
+
+	pthread_join(threadID_loadMigration, NULL);
 	pthread_mutex_destroy(&mutex_fdset);
+	pthread_mutex_destroy(&mutexUpdateReady);
+	pthread_cond_destroy(&condUpdateReady);
 
 	close(serverfd);
 	return 0;
@@ -395,12 +419,12 @@ int acceptingConn(){
 		return -1;
 	}
 	else{
-		//add to the set of client socket, mutex needed here to avoid conflict with the other two threads
-		//which selects from this set
+		//add to the set of client socket, mutex needed here to avoid conflict with the load migration threads
+		//which might need to access this set
 		pthread_mutex_lock(&mutex_fdset);
 		for(int i=0;i<MAX_NUM_CLIENTS;i++){
-			if(sock_array[i]==0){
-				sock_array[i]=newsockfd;
+			if(sockfds[i]==0){
+				sockfds[i]=newsockfd;
 				break;
 			}
 		}
@@ -417,7 +441,7 @@ int acceptingConn(){
 		char str[INET_ADDRSTRLEN];
 		inet_ntop( AF_INET, &peeraddr.sin_addr.s_addr, str, INET_ADDRSTRLEN );
 		printf("accepted a new connection: %s: %d \n", str, peeraddr.sin_port);
-		*/
+		 */
 	}
 	return 0;
 }
@@ -429,15 +453,15 @@ int receivingClientReport(){
 		//using this set for too long.
 		fd_set readfds;
 		FD_ZERO(&readfds);
-		int temp_sock_array[MAX_NUM_CLIENTS];
+		int temp_sockfds_clients[MAX_NUM_CLIENTS];
 		int max_fd =0;
 		//copy the currently opened socket to the readable fd set
 		pthread_mutex_lock(&mutex_fdset);
 		for(int i=0;i<MAX_NUM_CLIENTS;i++){
-			temp_sock_array[i] = sock_array[i]; // we copy it to a temp array, so that we can release the sock_array for other threads
-			if(sock_array[i]>0){
-				FD_SET(sock_array[i],&readfds);
-				if(sock_array[i]>max_fd) max_fd = sock_array[i];
+			temp_sockfds_clients[i] = sockfds[i]; // we copy it to a temp array, so that we can release the sockfds_clients for other threads
+			if(sockfds[i]>0){
+				FD_SET(sockfds[i],&readfds);
+				if(sockfds[i]>max_fd) max_fd = sockfds[i];
 			}
 		}
 		pthread_mutex_unlock(&mutex_fdset);
@@ -456,14 +480,14 @@ int receivingClientReport(){
 
 		//check the other sockets (client sockets)
 		for(int i=0;i<MAX_NUM_CLIENTS;i++){
-			if(FD_ISSET(temp_sock_array[i],&readfds)&&temp_sock_array[i]!=serverfd){//the socket is readable
+			if(FD_ISSET(temp_sockfds_clients[i],&readfds)&&temp_sockfds_clients[i]!=serverfd){//the socket is readable
 
 				//read the incoming message and handle it
-				if(handleClientReport(temp_sock_array[i])<0){
+				if(handleClientReport(temp_sockfds_clients[i])<0){
 					pthread_mutex_lock(&mutex_fdset);
-					if(sock_array[i]==temp_sock_array[i]){
-						close(sock_array[i]);
-						sock_array[i]=0;
+					if(sockfds[i]==temp_sockfds_clients[i]){
+						close(sockfds[i]);
+						sockfds[i]=0;
 					}
 					pthread_mutex_unlock(&mutex_fdset);
 					printf("client leaving\n");
@@ -471,7 +495,6 @@ int receivingClientReport(){
 			}
 
 		}
-
 	}
 	return 0;
 
@@ -481,10 +504,56 @@ int handleClientReport(int clientfd){
 	int result = read(clientfd,msg,512);
 	if(result ==0)//the socket is closed from client side{
 		return -1;
-	else
-			load_mgr->updateNodeInfo(clientfd,msg);
+	else{
+		pthread_mutex_lock(&mutexUpdateReady);
+		load_mgr->updateNodeInfo(clientfd,msg);
+		isUpdateReady = 1;
+		pthread_cond_signal(&condUpdateReady);
+		pthread_mutex_unlock(&mutexUpdateReady);
+	}
 	return 0;
 
+}
+static void* manageMigration(void* arg){
+
+	pthread_mutex_lock(&mutexUpdateReady); //TODO: double check here
+	//testing purpose only
+	int count =0;
+	while(!bStop /*&& !isUpdateReady*/)
+	{
+		pthread_cond_wait(&condUpdateReady,&mutexUpdateReady);
+		if(isUpdateReady){
+			//check the load condition on all client nodes, make migration decision, and send notifications to clients
+			//who need to migrate
+
+			//release the mutexUpdateReady, the LoadManager's methods has it own mutex to sync.
+			//the read and write on NodeInfo list.
+			isUpdateReady = 0;
+			pthread_mutex_unlock(&mutexUpdateReady);
+
+			//testing purpose only: sleep for a while before making the decision:
+			sleep(10);
+			std::map<int, std::string> migrationDecision;
+			load_mgr->redistributeLoad(&migrationDecision);
+			//send the migration decision to the nodes that are the sources of the migration
+			std::map<int,string>::const_iterator it;
+			for(it = migrationDecision.begin(); it!=migrationDecision.end(); it++){
+				if(count ==0){ //for testing purpose, now send this only once
+					int n = write((*it).first,(*it).second.c_str(),strlen((*it).second.c_str())+1);
+					count++;
+					cout<<(*it).second<<endl;
+					if (n<0){
+						printf("error sending migration decision to node %d \n", (*it).first);
+					}
+				}
+
+			}
+			pthread_mutex_lock(&mutexUpdateReady);
+		}
+	}
+	pthread_mutex_unlock(&mutexUpdateReady);
+	cout<<"migration coordination thread is about to exit"<<endl;
+	return 0;
 }
 
 

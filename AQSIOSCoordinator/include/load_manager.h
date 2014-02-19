@@ -6,6 +6,7 @@
  */
 #include <iostream>
 #include <list>
+#include <map>
 #include <pthread.h>
 #ifndef NODE_INFO_H_
 #include "node_info.h"
@@ -34,4 +35,9 @@ public:
 	//check if all the nodes is ready to execute
 	bool isAllNodesReady();
 	//this class also contains function that redistribute workload;
+	/*
+	 * The following function make load redistribution decision based on monitored load status of the client
+	 * and update a list of <source_node_fd, message to send to the migration source node>
+	 */
+	void redistributeLoad(std::map<int, std::string>* migrationDecision);
 };
